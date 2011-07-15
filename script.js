@@ -51,10 +51,12 @@ $(function() {
         }, 300);
     };
     User.prototype.moveTo = function(x, y) {
+        x = parseInt(x);
+        y = parseInt(y);
         this.attrs.cx = x;
         this.attrs.cy = y;
         var time = 500;
-        var easing = "elastic";
+        var easing = "backOut";
         this.circle.animate({
             "cx": x,
             "cy": y
@@ -63,6 +65,12 @@ $(function() {
             "x": x,
             "y": y + this.attrs.r + 5
         }, time, easing);
+        if(this.radius) {
+            this.radius.animate({
+                "cx": x,
+                "cy": y
+            }, time, easing);
+        }
     };
     User.prototype.say = function(text) {
         var said = this.screen.text(this.attrs.cx, this.attrs.cy, text); 
@@ -76,10 +84,41 @@ $(function() {
     }
     User.prototype.yours = function(value) {
         if(value) {
+            this.isYours = true;
             this.circle.animate({
                 "fill": "#000",
                 "stroke": "#000"
-            }, 1000, "<")
+            }, 1000, "<");
+
+            // outer circle for listening radius
+            this.radius = this.screen.circle(this.attrs.cx, this.attrs.cy, 140);
+            this.radius.attr("opacity", 0);
+            this.radius.animate({
+                "fill": "#000",
+                "opacity": 0.1
+            }, 1000);
+
+            $(this.screen.canvas).click({user: this}, function(e) {
+                if(e.data.user.isYours) {
+                    var x = e.pageX - this.offsetLeft;
+                    var y = e.pageY - this.offsetTop;
+                    e.data.user.moveTo(x, y);
+                }
+            });
+        } else {
+            this.isYours = false;
+            this.circle.animate({
+                "fill": "#f00",
+                "stroke": "#c00"
+            }, 1000, "<");
+            if(this.radius) {
+                this.radius.animate({
+                    "opacity": 0
+                }, 1000, function() {
+                    this.radius.remove();
+                })
+                delete this.radius;
+            }
         }
     }
     User.prototype.getName = function() {
@@ -108,16 +147,33 @@ $(function() {
 
 
 
+    // right panel heights/widths
+    $('#messages-list').css("height",
+            ($(document).height() - $('#message-input-div').height()) + "px");
+
+
+
+
     window.paper = new Screen("canvas", "100%", "100%");
 
     // #messages-list scroll
     setInterval(function(){
-        $("#messages").stop();
-        $("#messages").animate({ scrollTop: $("#messages").prop("scrollHeight") }, 300);
+        $("#messages-list").stop();
+        $("#messages-list").animate({ scrollTop: $("#messages").prop("scrollHeight") }, 300);
     }, 100);
 
+    // background gradient
+    var rect = paper.paper.circle($("#canvas").width() / 2, $("#canvas").height() / 2, 500);
+    rect.attr('fill', 'r(0.5, 0.5)#AAA-#FFF');
+    rect.attr('stroke', 0);
+    rect.toBack();
+    
 
+
+
+    // MOCK
     window.circles = new UserManager();
+
     window.NUM_CIRCLES = 20;
     for(var i=0; i<NUM_CIRCLES; i++) {
         circles.addUser(paper.user({
@@ -127,6 +183,9 @@ $(function() {
             "name": "woohooo"
         }));
     }
+    circles.users[0].yours(true);
+
+    // dirty hack (copy-paste from console)
     setInterval(function() {
         circles.say(circles.users[parseInt(Math.random()*NUM_CIRCLES)],
                      ["wtf?!", "dude!", "lorem ipsum dolor sit amet", "how are you?", "!!!"]
