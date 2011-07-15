@@ -116,13 +116,6 @@ $(function() {
         $("#messages").animate({ scrollTop: $("#messages").prop("scrollHeight") }, 300);
     }, 100);
 
-    // panning listeners
-    $(paper.paper.canvas).mousedown(function() {
-        console.log("DOWN");
-    });
-    $(paper.paper.canvas).mouseup(function() {
-        console.log("UP");
-    });
 
     window.circles = new UserManager();
     window.NUM_CIRCLES = 20;
@@ -130,7 +123,7 @@ $(function() {
         circles.addUser(paper.user({
             "cx": parseInt(Math.random() * $('#canvas').width() - 20),
             "cy": parseInt(Math.random() * $('#canvas').height() - 20),
-            "r" : 25, 
+            "r" : 10, 
             "name": "woohooo"
         }));
     }
