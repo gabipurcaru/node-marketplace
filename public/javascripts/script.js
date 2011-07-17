@@ -138,6 +138,13 @@ $(function() {
     UserManager.prototype.getAll = function() {
         return this.users;
     }
+    UserManager.prototype.getByName = function(name) {
+        for(var i=0; i<this.users.length; i++) {
+            if(this.users[i].getName() == name) {
+                return this.users[i];
+            }
+        }
+    }
     UserManager.prototype.say = function(user, message) {
         user.say(message);
         $("#messages-list").append($(
@@ -169,10 +176,36 @@ $(function() {
     rect.toBack();
     
 
+    window.userManager = new UserManager();
+
+    var socket = io.connect();
+
+    socket.on('user-enter', function(data) {
+        console.log('user entered');
+        userManager.addUser(paper.user({
+            "cx": data.x,
+            "cy": data.y,
+            "r": 10,
+            "name": data.name
+        }));
+    });
+    socket.on('user-exit', function() {
+        console.log('user left');
+    });
+    socket.on('user-message', function(data) {
+        userManager.getByName(data.user).say(data.message);
+    });
+    socket.on('user-you', function(name) {
+        userManager.getByName(name).yours(true);
+    });
+
+    setInterval(function() {
+        socket.emit('user-message', "hi");
+    }, 1000);
 
 
     // MOCK
-    window.circles = new UserManager();
+    /*window.circles = new UserManager();
 
     window.NUM_CIRCLES = 20;
     for(var i=0; i<NUM_CIRCLES; i++) {
@@ -190,5 +223,5 @@ $(function() {
         circles.say(circles.users[parseInt(Math.random()*NUM_CIRCLES)],
                      ["wtf?!", "dude!", "lorem ipsum dolor sit amet", "how are you?", "!!!"]
                      [parseInt(Math.random()*5)]);
-    }, 500);
+    }, 500);*/
 });
