@@ -202,26 +202,4 @@ $(function() {
     setInterval(function() {
         socket.emit('user-message', "hi");
     }, 1000);
-
-
-    // MOCK
-    /*window.circles = new UserManager();
-
-    window.NUM_CIRCLES = 20;
-    for(var i=0; i<NUM_CIRCLES; i++) {
-        circles.addUser(paper.user({
-            "cx": parseInt(Math.random() * $('#canvas').width() - 20),
-            "cy": parseInt(Math.random() * $('#canvas').height() - 20),
-            "r" : 10, 
-            "name": "woohooo"
-        }));
-    }
-    circles.users[0].yours(true);
-
-    // dirty hack (copy-paste from console)
-    setInterval(function() {
-        circles.say(circles.users[parseInt(Math.random()*NUM_CIRCLES)],
-                     ["wtf?!", "dude!", "lorem ipsum dolor sit amet", "how are you?", "!!!"]
-                     [parseInt(Math.random()*5)]);
-    }, 500);*/
 });
