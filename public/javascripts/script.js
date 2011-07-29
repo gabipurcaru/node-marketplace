@@ -124,13 +124,25 @@ $(function() {
     User.prototype.getName = function() {
         return this.name;
     }
+    User.prototype.remove = function() {
+        if(this.circle) {
+            this.circle.remove();
+        }
+        if(this.text) {
+            this.text.remove();
+        }
+        if(this.radius) {
+            this.radius.remove();
+        }
+    }
 
 
 
 
 
-    function UserManager() {
+    function UserManager(paper) {
         this.users = [];
+        this.paper = paper;
     }
     UserManager.prototype.addUser = function(user) {
         return this.users.push(user);
@@ -146,10 +158,35 @@ $(function() {
         }
     }
     UserManager.prototype.say = function(user, message) {
+        if(!(user instanceof User)) {
+            user = this.getByName(user);
+        }
         user.say(message);
         $("#messages-list").append($(
             "<li>" + "<b>" + user.getName() + "</b>:" + message + "</li>"
         ));
+    }
+    UserManager.prototype.removeAll = function(user) {
+        console.debug(this.users);
+        for(var i=0; i<this.users.length; i++) {
+            this.users[i].remove();
+        }
+        this.users = [];
+    }
+    UserManager.prototype.updateAllUsers = function(users) {
+        this.removeAll();
+        for(var i=0; i<users.length; i++) {
+            var user = paper.user({
+                "cx": users[i].x,
+                "cy": users[i].y,
+                "r": 10,
+                "name": users[i].name
+            });
+            if(users[i].yours) {
+                user.yours(true);
+            }
+            this.addUser(user);
+        }
     }
 
 
@@ -176,7 +213,7 @@ $(function() {
     rect.toBack();
     
 
-    window.userManager = new UserManager();
+    window.userManager = new UserManager(window.paper);
 
     var socket = io.connect();
 
@@ -193,10 +230,13 @@ $(function() {
         console.log('user left');
     });
     socket.on('user-message', function(data) {
-        userManager.getByName(data.user).say(data.message);
+        userManager.say(data.user, data.message);
     });
     socket.on('user-you', function(name) {
         userManager.getByName(name).yours(true);
+    });
+    socket.on('update-all-users', function(users) {
+        userManager.updateAllUsers(users);
     });
 
     setInterval(function() {

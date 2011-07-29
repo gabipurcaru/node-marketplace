@@ -30,6 +30,8 @@ app.configure('production', function() {
 var userManager = new UserManager(io.sockets);
 io.sockets.on('connection', function(socket) {
     userManager.addUser(socket);
+    userManager.updateAllUsers(socket);
+
     socket.on('disconnect', function() {
         userManager.removeUser(socket);
     });

@@ -12,7 +12,7 @@ function UserManager(sockets) {
 UserManager.prototype.addUser = function(socket) {
     var x = Math.random() * 500;
     var y = Math.random() * 500;
-    var name = socket.id;
+    var name = socket.id.slice(0, 7);
     this.sockets.emit('user-enter', {
         'x': x,
         'y': y,
@@ -42,13 +42,23 @@ UserManager.prototype.getBySocket = function(socket) {
     }
 }
 UserManager.prototype.say = function(socket, message) {
-    um = this;
+    var um = this;
     this.users.forEach(function(user) {
         user.socket.emit('user-message', {
             "message": message,
             "user": um.getBySocket(socket).name 
         });
     }); 
+}
+UserManager.prototype.updateAllUsers = function(socket) {
+    socket.emit('update-all-users', this.getAll().map(function(user) {
+        return {
+            'x': user.x,
+            'y': user.y,
+            'name': user.name,
+            'yours': (user.socket == socket ? true : false)
+        };
+    }));
 }
 
 exports.User = User;
