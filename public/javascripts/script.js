@@ -22,6 +22,8 @@ $(function() {
         this.attrs.fill = this.attrs.fill || "#FF0000";
         this.attrs.stroke = this.attrs.stroke || "#CC0000";
         this.screen = screen;
+        this.socket = attrs.socket;
+        delete attrs.socket;
 
         // circle
         this.circle = screen.circle();
@@ -71,6 +73,7 @@ $(function() {
                 "cy": y
             }, time, easing);
         }
+        this.socket.emit('user-move', {x:x, y:y});
     };
     User.prototype.say = function(text) {
         var said = this.screen.text(this.attrs.cx, this.attrs.cy, text); 
@@ -140,9 +143,10 @@ $(function() {
 
 
 
-    function UserManager(paper) {
+    function UserManager(paper, socket) {
         this.users = [];
         this.paper = paper;
+        this.socket = socket;
     }
     UserManager.prototype.addUser = function(user) {
         return this.users.push(user);
@@ -156,6 +160,7 @@ $(function() {
                 return this.users[i];
             }
         }
+        throw new Error("User not in room.");
     }
     UserManager.prototype.say = function(user, message) {
         if(!(user instanceof User)) {
@@ -165,6 +170,14 @@ $(function() {
         $("#messages-list").append($(
             "<li>" + "<b>" + user.getName() + "</b>:" + message + "</li>"
         ));
+    }
+    UserManager.prototype.remove = function(user) {
+        if(typeof user === "string") {
+            user = this.getByName(user);
+        }
+        var index = this.users.indexOf(user);
+        user.remove();
+        delete this.users[index];
     }
     UserManager.prototype.removeAll = function(user) {
         console.debug(this.users);
@@ -180,7 +193,8 @@ $(function() {
                 "cx": users[i].x,
                 "cy": users[i].y,
                 "r": 10,
-                "name": users[i].name
+                "name": users[i].name,
+                "socket": this.socket
             });
             if(users[i].yours) {
                 user.yours(true);
@@ -194,7 +208,6 @@ $(function() {
     // right panel heights/widths
     $('#messages-list').css("height",
             ($(document).height() - $('#message-input-div').height()) + "px");
-
 
 
 
@@ -213,9 +226,9 @@ $(function() {
     rect.toBack();
     
 
-    window.userManager = new UserManager(window.paper);
-
     var socket = io.connect();
+
+    window.userManager = new UserManager(window.paper, socket);
 
     socket.on('user-enter', function(data) {
         console.log('user entered');
@@ -223,11 +236,12 @@ $(function() {
             "cx": data.x,
             "cy": data.y,
             "r": 10,
-            "name": data.name
+            "name": data.name,
+            "socket": socket
         }));
     });
-    socket.on('user-exit', function() {
-        console.log('user left');
+    socket.on('user-exit', function(name) {
+        userManager.remove(name);
     });
     socket.on('user-message', function(data) {
         userManager.say(data.user, data.message);

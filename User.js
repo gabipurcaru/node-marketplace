@@ -3,6 +3,7 @@ function User(socket, x, y, name) {
     this.x = x;
     this.y = y;
     this.name = name;
+    this.id = socket.id;
 }
 
 function UserManager(sockets) {
@@ -23,13 +24,18 @@ UserManager.prototype.addUser = function(socket) {
     return this.users.push(user);
 }
 UserManager.prototype.removeUser = function(socket) {
+    var name;
     for(var i=0; i<this.users.length; i++) {
-        if(this.users[i].name == socket.id) {
+        if(this.users[i].id == socket.id) {
+            name = this.users[i].name;
             delete this.users[i];
             break;
         }
     }
-    this.sockets.emit('user-exit', socket.id);
+    if(!name) {
+        throw new Error("User not in list.");
+    }
+    this.sockets.emit('user-exit', name);
 }
 UserManager.prototype.getAll = function() {
     return this.users;
