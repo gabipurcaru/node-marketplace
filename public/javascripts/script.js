@@ -178,12 +178,18 @@ $(function() {
     }
     UserManager.prototype.say = function(user, message) {
         if(!(user instanceof User)) {
-            user = this.getByName(user);
+            user = this.getById(user);
         }
         user.say(message);
-        $("#messages-list").append($(
-            "<li>" + "<b>" + user.getName() + "</b>:" + message + "</li>"
-        ));
+        if(user.isYours) {
+            $("#messages-list").append($(
+                "<li class='you'><b>" + user.getName() + "</b>:" + message + "</li>"
+            ));
+        } else {
+            $("#messages-list").append($(
+                "<li>" + "<b>" + user.getName() + "</b>:" + message + "</li>"
+            ));
+        }
     }
     UserManager.prototype.remove = function(user) {
         if(typeof user === "string") {
@@ -227,7 +233,7 @@ $(function() {
     window.paper = new Screen("canvas", "100%", "100%");
 
     // #messages-list scroll
-    setInterval(function(){
+    setInterval(function() {
         $("#messages-list").stop();
         $("#messages-list").animate({ scrollTop: $("#messages").prop("scrollHeight") }, 300);
     }, 100);
@@ -242,6 +248,14 @@ $(function() {
     var socket = io.connect();
 
     window.userManager = new UserManager(window.paper, socket);
+
+    $("#message-send-button").click(function() {
+        if(!$("#message-input").val()) {
+            return;
+        }
+        socket.emit('user-message', $('#message-input').val());
+        $("#message-input").val("");
+    });
 
     socket.on('user-enter', function(data) {
         console.log('user entered');
@@ -258,7 +272,8 @@ $(function() {
         userManager.remove(name);
     });
     socket.on('user-message', function(data) {
-        userManager.say(data.user, data.message);
+        console.log(data);
+        userManager.say(data.userId, data.message);
     });
     socket.on('user-you', function(name) {
         userManager.getByName(name).yours(true);
@@ -269,8 +284,4 @@ $(function() {
     socket.on('user-move', function(data) {
         userManager.getById(data.userId).moveTo(data.x, data.y);
     });
-
-    setInterval(function() {
-        socket.emit('user-message', "hi");
-    }, 1000);
 });

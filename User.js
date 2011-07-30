@@ -62,7 +62,7 @@ UserManager.prototype.say = function(socket, message) {
     this.users.forEach(function(user) {
         user.socket.emit('user-message', {
             "message": message,
-            "user": um.getBySocket(socket).name 
+            "userId": socket.id 
         });
     }); 
 }
