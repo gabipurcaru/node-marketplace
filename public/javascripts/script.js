@@ -17,6 +17,9 @@ $(function() {
         this.name = attrs.name;
         delete attrs.name;
 
+        this.id = attrs.id;
+        delete attrs.id;
+
         this.attrs = attrs;
         this.attrs.r = this.attrs.r || 10;
         this.attrs.fill = this.attrs.fill || "#FF0000";
@@ -73,7 +76,6 @@ $(function() {
                 "cy": y
             }, time, easing);
         }
-        this.socket.emit('user-move', {x:x, y:y});
     };
     User.prototype.say = function(text) {
         var said = this.screen.text(this.attrs.cx, this.attrs.cy, text); 
@@ -105,7 +107,11 @@ $(function() {
                 if(e.data.user.isYours) {
                     var x = e.pageX - this.offsetLeft;
                     var y = e.pageY - this.offsetTop;
-                    e.data.user.moveTo(x, y);
+                    e.data.user.socket.emit('user-move', {
+                        "userId": e.data.user.id,
+                        "x": x,
+                        "y": y
+                    });
                 }
             });
         } else {
@@ -118,9 +124,12 @@ $(function() {
                 this.radius.animate({
                     "opacity": 0
                 }, 1000, function() {
+                    if(!this || !this.radius) {
+                        return;
+                    }
                     this.radius.remove();
+                    delete this.radius;
                 })
-                delete this.radius;
             }
         }
     }
@@ -128,14 +137,12 @@ $(function() {
         return this.name;
     }
     User.prototype.remove = function() {
+        this.yours(false);
         if(this.circle) {
             this.circle.remove();
         }
         if(this.text) {
             this.text.remove();
-        }
-        if(this.radius) {
-            this.radius.remove();
         }
     }
 
@@ -162,6 +169,13 @@ $(function() {
         }
         throw new Error("User not in room.");
     }
+    UserManager.prototype.getById = function(id) {
+        for(var i=0; i<this.users.length; i++) {
+            if(this.users[i].id === id) {
+                return this.users[i];
+            }
+        }
+    }
     UserManager.prototype.say = function(user, message) {
         if(!(user instanceof User)) {
             user = this.getByName(user);
@@ -180,7 +194,6 @@ $(function() {
         delete this.users[index];
     }
     UserManager.prototype.removeAll = function(user) {
-        console.debug(this.users);
         for(var i=0; i<this.users.length; i++) {
             this.users[i].remove();
         }
@@ -194,6 +207,7 @@ $(function() {
                 "cy": users[i].y,
                 "r": 10,
                 "name": users[i].name,
+                "id": users[i].id,
                 "socket": this.socket
             });
             if(users[i].yours) {
@@ -202,7 +216,6 @@ $(function() {
             this.addUser(user);
         }
     }
-
 
 
     // right panel heights/widths
@@ -237,6 +250,7 @@ $(function() {
             "cy": data.y,
             "r": 10,
             "name": data.name,
+            "id": data.id,
             "socket": socket
         }));
     });
@@ -251,6 +265,9 @@ $(function() {
     });
     socket.on('update-all-users', function(users) {
         userManager.updateAllUsers(users);
+    });
+    socket.on('user-move', function(data) {
+        userManager.getById(data.userId).moveTo(data.x, data.y);
     });
 
     setInterval(function() {

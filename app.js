@@ -38,6 +38,9 @@ io.sockets.on('connection', function(socket) {
     socket.on('user-message', function(message) {
         userManager.say(socket, message);
     });
+    socket.on('user-move', function(data) {
+        userManager.userMove(data);
+    });
 });
 
 console.log("Express server listening on port %d", app.address().port);

@@ -18,6 +18,7 @@ UserManager.prototype.addUser = function(socket) {
         'x': x,
         'y': y,
         'name': name,
+        'id': socket.id
     });
     socket.emit('user-you', name);
     var user = new User(socket, x, y, name);
@@ -46,6 +47,15 @@ UserManager.prototype.getBySocket = function(socket) {
             return this.users[i];
         }
     }
+    throw new Error("User not in list");
+}
+UserManager.prototype.getById = function(id) {
+    for(var i=0; i<this.users.length; i++) {
+        if(id == this.users[i].id) {
+            return this.users[i];
+        }
+    }
+    throw new Error("User not in list");
 }
 UserManager.prototype.say = function(socket, message) {
     var um = this;
@@ -62,9 +72,16 @@ UserManager.prototype.updateAllUsers = function(socket) {
             'x': user.x,
             'y': user.y,
             'name': user.name,
+            'id': user.id,
             'yours': (user.socket == socket ? true : false)
         };
     }));
+}
+UserManager.prototype.userMove = function(data) {
+    var user = this.getById(data.userId);
+    user.x = data.x;
+    user.y = data.y;
+    this.sockets.emit('user-move', data);
 }
 
 exports.User = User;
