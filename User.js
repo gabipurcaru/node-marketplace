@@ -59,7 +59,11 @@ UserManager.prototype.getById = function(id) {
 }
 UserManager.prototype.say = function(socket, message) {
     var um = this;
+    var sending = this.getBySocket(socket);
     this.users.forEach(function(user) {
+        if(this.distance(sending, user) > 140) {
+            return; // too far
+        }
         user.socket.emit('user-message', {
             "message": message,
             "userId": socket.id 
@@ -82,6 +86,10 @@ UserManager.prototype.userMove = function(data) {
     user.x = data.x;
     user.y = data.y;
     this.sockets.emit('user-move', data);
+}
+UserManager.prototype.distance = function(user1, user2) {
+    return Math.sqrt((user1.x - user2.x)*(user1.x - user2.x)
+                    +(user1.y - user2.y)*(user1.y - user2.y));
 }
 
 exports.User = User;

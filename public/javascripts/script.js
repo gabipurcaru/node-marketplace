@@ -83,7 +83,7 @@ $(function() {
             "x": this.attrs.cx + 50,
             "y": this.attrs.cy - 50,
             "opacity": 0
-        }, 500, '>', function() {
+        }, 1500, '>', function() {
             said.remove();
         });
     }
@@ -102,6 +102,9 @@ $(function() {
                 "fill": "#000",
                 "opacity": 0.1
             }, 1000);
+
+            this.circle.toFront();
+            this.text.toFront();
 
             $(this.screen.canvas).click({user: this}, function(e) {
                 if(e.data.user.isYours) {
@@ -239,7 +242,8 @@ $(function() {
     }, 100);
 
     // background gradient
-    var rect = paper.paper.circle($("#canvas").width() / 2, $("#canvas").height() / 2, 500);
+    var rect = paper.paper.circle($("#canvas").width() / 2, $("#canvas").height() / 2, 1000);
+
     rect.attr('fill', 'r(0.5, 0.5)#AAA-#FFF');
     rect.attr('stroke', 0);
     rect.toBack();
