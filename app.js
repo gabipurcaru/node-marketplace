@@ -1,7 +1,6 @@
 var express = require('express');
-var _user = require('./User');
-var User = _user.User;
-var UserManager = _user.UserManager;
+var User = require('./User').User;
+var UserManager = require('./UserManager').UserManager;
 
 var app = module.exports = express.createServer();
 var io = require('socket.io').listen(app);
