@@ -27,6 +27,12 @@ UserManager.prototype.addUser = function(socket) {
 UserManager.prototype.removeUser = function(socket) {
     var name;
     for(var i=0; i<this.users.length; i++) {
+        // cleanup
+        if(!this.users[i]) {
+            delete this.users[i];
+            continue;
+        }
+
         if(this.users[i].id == socket.id) {
             name = this.users[i].name;
             delete this.users[i];
@@ -61,7 +67,7 @@ UserManager.prototype.say = function(socket, message) {
     var um = this;
     var sending = this.getBySocket(socket);
     this.users.forEach(function(user) {
-        if(this.distance(sending, user) > 140) {
+        if(um.distance(sending, user) > 140) {
             return; // too far
         }
         user.socket.emit('user-message', {
