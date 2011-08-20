@@ -1,4 +1,5 @@
 var User = require('./User').User;
+var random_name = require('./names').random_name;
 
 function UserManager(sockets) {
     this.users = [];
@@ -7,7 +8,7 @@ function UserManager(sockets) {
 UserManager.prototype.addUser = function(socket) {
     var x = Math.random() * 500;
     var y = Math.random() * 500;
-    var name = socket.id.slice(0, 7);
+    var name = random_name();
     this.sockets.emit('user-enter', {
         'x': x,
         'y': y,
