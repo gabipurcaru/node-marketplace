@@ -2,6 +2,9 @@
     "name": "node-marketplace"
   , "version": "0.0.1"
   , "private": true
+  , {
+    "node": "0.8.x"
+  }
   , "dependencies": {
       "express": ">=2.3.11"
     , "jade": ">= 0.0.1"
