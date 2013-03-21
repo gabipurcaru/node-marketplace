@@ -1,15 +1,17 @@
 var express = require('express');
+var http = require('http');
 var User = require('./User').User;
 var UserManager = require('./UserManager').UserManager;
 
-var app = module.exports = express.createServer();
-var io = require('socket.io').listen(app);
+var app = module.exports = express();
+var server = http.createServer(app);
+var io = require('socket.io').listen(server);
 io.configure(function () {
     io.set("transports", ["xhr-polling"]);
     io.set("polling duration", 10);
 });
 var port = process.env.PORT || 8000;
-app.listen(port);
+server.listen(port);
 
 // Configuration
 
