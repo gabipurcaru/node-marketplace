@@ -1,257 +1,198 @@
+// Array Remove - By John Resig (MIT Licensed)
+Array.prototype.remove = function(from, to) {
+    var rest = this.slice((to || from) + 1 || this.length);
+    this.length = from < 0 ? this.length + from : from;
+    return this.push.apply(this, rest);
+};
+
+
 $(function() {
-    function Screen(a, b, c, d) {
-        this.paper = new Raphael(a, b, c, d);
-    }
-    function setActiveUser(user) {
-        this.activeUser = user;
-    }
-    function getActiveUser(user) {
-        this.activeUser = user;
-    }
+    var USER_RADIUS = 20;
+    var SHOUT_RADIUS = 240;
 
-    Screen.prototype.user = function(attrs) {
-        return new User(this.paper, attrs); 
-    }
-
-    function User(screen, attrs) {
-        this.name = attrs.name;
-        delete attrs.name;
-
-        this.id = attrs.id;
-        delete attrs.id;
-
-        this.attrs = attrs;
-        this.attrs.r = this.attrs.r || 10;
-        this.attrs.fill = this.attrs.fill || "#FF0000";
-        this.attrs.stroke = this.attrs.stroke || "#CC0000";
-        this.screen = screen;
-        this.socket = attrs.socket;
-        delete attrs.socket;
-
-        // circle
-        this.circle = screen.circle();
-        this.circle.attr($.extend({}, attrs, {"r": 0}));
-        this.circle.hover((function(scope) {
-            return function() {
-                scope.circleHover.call(scope);
-            }
-        })(this));
-        this.circle.animate({
-            "r": this.attrs.r
-        }, Math.random() * 4000, "backOut")
-
-        // name
-        this.text = screen.text(attrs.cx, attrs.cy + attrs.r + 5, this.name);
-    }
-    User.prototype.circleHover = function() {
-        this.circle.animate({
-            "50%": {
-                "r": this.attrs.r * 1.75,
-                "easing": ""
-            },
-            "100%": {
-                "r": this.attrs.r,
-                "easing": "backOut"
-            }
-        }, 300);
-    };
-    User.prototype.moveTo = function(x, y) {
-        x = parseInt(x);
-        y = parseInt(y);
-        this.attrs.cx = x;
-        this.attrs.cy = y;
-        var time = 500;
-        var easing = "backOut";
-        this.circle.animate({
-            "cx": x,
-            "cy": y
-        }, time, easing);
-        this.text.animate({
-            "x": x,
-            "y": y + this.attrs.r + 5
-        }, time, easing);
-        if(this.radius) {
-            this.radius.animate({
-                "cx": x,
-                "cy": y
-            }, time, easing);
+    function User(vis, x, y, mine, name, id) {
+        if(arguments.length === 0) {
+            return;
         }
-    };
-    User.prototype.say = function(text) {
-        var said = this.screen.text(this.attrs.cx, this.attrs.cy, text); 
-        said.animate({
-            "x": this.attrs.cx + 50,
-            "y": this.attrs.cy - 50,
-            "opacity": 0
-        }, 1500, '>', function() {
-            said.remove();
-        });
+        this.svg = vis.append("svg:g");
+        this.svg.classed("user", true);
+        if(mine) {
+            this.svg.classed("own", true);
+        }
+        this.shout = this.svg.append("svg:circle")
+            .attr("cx", x)
+            .attr("cy", y)
+            .attr("r", SHOUT_RADIUS);
+        this.shout.classed("shout", true);
+        this.circle = this.svg.append("svg:circle")
+            .attr("cx", x)
+            .attr("cy", y)
+            .attr("r", USER_RADIUS);
+        this.circle.classed("circle", true);
+
+        this.x = x;
+        this.y = y;
+        this.mine = mine;
+        this.name = name;
+        this.id = id;
     }
-    User.prototype.yours = function(value) {
-        if(value) {
-            this.isYours = true;
-            this.circle.animate({
-                "fill": "#000",
-                "stroke": "#000"
-            }, 1000, "<");
+    User.prototype.isOwnUser = function() {
+        return !!this.mine;
+    };
+    User.prototype.moveTo = function(x, y, supress) {
+        this.x = x;
+        this.y = y;
+        this.circle.transition()
+            .attr("cx", x)
+            .attr("cy", y);
+        this.shout.transition()
+            .attr("cx", x)
+            .attr("cy", y);
 
-            // outer circle for listening radius
-            this.radius = this.screen.circle(this.attrs.cx, this.attrs.cy, 140);
-            this.radius.attr("opacity", 0);
-            this.radius.animate({
-                "fill": "#000",
-                "opacity": 0.1
-            }, 1000);
-
-            this.circle.toFront();
-            this.text.toFront();
-
-            $(this.screen.canvas).click({user: this}, function(e) {
-                if(e.data.user.isYours) {
-                    var x = e.pageX - this.offsetLeft;
-                    var y = e.pageY - this.offsetTop;
-                    e.data.user.socket.emit('user-move', {
-                        "userId": e.data.user.id,
-                        "x": x,
-                        "y": y
-                    });
-                }
+        if(!supress) {
+            socket.emit('user-move', {
+                "userId": this.id,
+                "x": x,
+                "y": y
             });
-        } else {
-            this.isYours = false;
-            this.circle.animate({
-                "fill": "#f00",
-                "stroke": "#c00"
-            }, 1000, "<");
-            if(this.radius) {
-                this.radius.animate({
-                    "opacity": 0
-                }, 1000, function() {
-                    if(!this || !this.radius) {
-                        return;
-                    }
-                    this.radius.remove();
-                    delete this.radius;
-                })
-            }
         }
-    }
-    User.prototype.getName = function() {
-        return this.name;
-    }
+    };
+    User.prototype.say = function(text, supress) {
+        this.svg.append("svg:text")
+            .attr("x", this.x-30)
+            .attr("y", this.y-15)
+            .attr("fill", "black")
+            .text(text)
+            .transition()
+            .delay(1000)
+            .duration(500)
+            .attr("dx", -10)
+            .attr("dy", -10)
+            .style("opacity", 0);
+        $("#messages").append($("<li>").html("<b>" + this.name + "</b>: " + text));
+        console.log("send? " + !supress);
+        if(!supress) {
+            socket.emit("user-message", $("#form input").val());
+        }
+    };
+    User.prototype.setOwnUser = function(set) {
+        if(set !== false) {
+            set = true;
+        }
+        this.mine = set;
+        this.svg.classed("own", this.mine);
+    };
     User.prototype.remove = function() {
-        this.yours(false);
-        if(this.circle) {
-            this.circle.remove();
-        }
-        if(this.text) {
-            this.text.remove();
-        }
-    }
+        this.svg.remove();
+    };
 
-
-
-
-
-    function UserManager(paper, socket) {
+    function UserManager(users) {
         this.users = [];
-        this.paper = paper;
-        this.socket = socket;
+        if(users) {
+            this.users = users;
+        }
     }
+    UserManager.prototype.createUser = function() {
+        u = new User();
+        User.prototype.constructor.apply(u, arguments);
+        this.addUser(u);
+    };
     UserManager.prototype.addUser = function(user) {
-        return this.users.push(user);
-    }
-    UserManager.prototype.getAll = function() {
-        return this.users;
-    }
-    UserManager.prototype.getByName = function(name) {
-        for(var i=0; i<this.users.length; i++) {
-            if(this.users[i].getName() == name) {
+        this.users.push(user);
+    };
+    UserManager.prototype.moveOwnUser = function(x, y) {
+        var i, own_user;
+        own_user = this.selectUser(function(x) {return x.isOwnUser();}, true);
+        if(!own_user) {
+            throw "No own user to move";
+        }
+        own_user.moveTo(x, y);
+    };
+    UserManager.prototype.getOwnUser = function() {
+        return this.selectUser(function(x) {return x.isOwnUser();}, true);
+    };
+    UserManager.prototype.setOwnUser = function(name) {
+        var i;
+        for(i=0; i<this.users.length; i++) {
+            if(this.users[i].name == name) {
+                this.users[i].setOwnUser();
+                return true;
+            }
+        }
+        return false;
+    };
+    UserManager.prototype.selectUser = function(selector, value) {
+        var i;
+        for(i=0; i<this.users.length; i++) {
+            if(selector(this.users[i]) == value) {
                 return this.users[i];
             }
         }
-        throw new Error("User not in room.");
-    }
-    UserManager.prototype.getById = function(id) {
-        for(var i=0; i<this.users.length; i++) {
-            if(this.users[i].id === id) {
-                return this.users[i];
-            }
-        }
-    }
-    UserManager.prototype.say = function(user, message) {
-        if(!(user instanceof User)) {
-            user = this.getById(user);
-        }
-        user.say(message);
-        if(user.isYours) {
-            $("#messages-list").append($(
-                "<li class='you'><b>" + user.getName() + "</b>:" + message + "</li>"
-            ));
-        } else {
-            $("#messages-list").append($(
-                "<li>" + "<b>" + user.getName() + "</b>:" + message + "</li>"
-            ));
-        }
-    }
-    UserManager.prototype.remove = function(user) {
-        if(typeof user === "string") {
-            user = this.getByName(user);
-        }
-        var index = this.users.indexOf(user);
+    };
+    UserManager.prototype.getUserById = function(id) {
+        return this.selectUser(function(x) {return x.id;}, id);
+    };
+    UserManager.prototype.getUserByName = function(name) {
+        return this.selectUser(function(x) {return x.name;}, name);
+    };
+    UserManager.prototype.removeUserByName = function(name) {
+        var user = this.getUserByName(name);
         user.remove();
-        delete this.users[index];
-    }
-    UserManager.prototype.removeAll = function(user) {
-        for(var i=0; i<this.users.length; i++) {
+        this.users.remove(this.users.indexOf(user));
+    };
+    UserManager.prototype.removeAllUsers = function() {
+        var i;
+        for(i=0; i<this.users.length; i++) {
             this.users[i].remove();
         }
         this.users = [];
-    }
-    UserManager.prototype.updateAllUsers = function(users) {
-        this.removeAll();
-        for(var i=0; i<users.length; i++) {
-            var user = paper.user({
-                "cx": users[i].x,
-                "cy": users[i].y,
-                "r": 10,
-                "name": users[i].name,
-                "id": users[i].id,
-                "socket": this.socket
-            });
-            if(users[i].yours) {
-                user.yours(true);
+    };
+    UserManager.prototype.updateAllUsers = function(data) {
+        this.removeAllUsers();
+        var i;
+        for(i=0; i<data.length; i++) {
+            if(!data[i]) {
+                continue;
+            }
+            var user = new User(vis, data[i].x, data[i].y, false, data[i].name,
+                                data[i].id);
+            if(data[i].yours) {
+                user.setOwnUser();
             }
             this.addUser(user);
         }
-    }
+    };
 
+    var zoom_pan = function() {
+        zoom_pan.translate = d3.event.translate;
+        zoom_pan.scale = d3.event.scale;
+        vis.attr("transform",
+            "translate(" + d3.event.translate + ")" + "scale(" + d3.event.scale + ")");
+    };
+    zoom_pan.translate = [0, 0];
+    zoom_pan.scale = 1;
+    var vis = d3.select("#canvas")
+        .append("svg:svg")
+        .attr("pointer-events", "all")
+        .append("svg:g")
+        .call(d3.behavior.zoom().on("zoom", zoom_pan))
+        .on("click", function() {
+            var x = d3.event.x, y = d3.event.y;
+            x = (x - zoom_pan.translate[0]) / zoom_pan.scale;
+            y = (y - zoom_pan.translate[1]) / zoom_pan.scale;
+            um.moveOwnUser(x, y);
+        });
 
-    // right panel heights/widths
-    $('#messages-list').css("height",
-            ($(document).height() - $('#message-input-div').height()) + "px");
+    vis.append("svg:rect")
+        .attr("width", 7000)
+        .attr("height", 7000)
+        .attr("fill", "white");
 
+    vis = vis.append("svg:g");
+    window.vis = vis;
 
-
-    window.paper = new Screen("canvas", "100%", "100%");
-
-    // #messages-list scroll
-    setInterval(function() {
-        $("#messages-list").stop();
-        $("#messages-list").animate({ scrollTop: $("#messages").prop("scrollHeight") }, 300);
-    }, 100);
-
-    // background gradient
-    var rect = paper.paper.circle($("#canvas").width() / 2, $("#canvas").height() / 2, 1000);
-
-    rect.attr('fill', 'r(0.5, 0.5)#AAA-#FFF');
-    rect.attr('stroke', 0);
-    rect.toBack();
-    
-
+    um = new UserManager();
     var socket = io.connect();
-
-    window.userManager = new UserManager(window.paper, socket);
 
     $("#message-send-button").click(function() {
         if(!$("#message-input").val()) {
@@ -262,30 +203,37 @@ $(function() {
     });
 
     socket.on('user-enter', function(data) {
-        console.log('user entered');
-        userManager.addUser(paper.user({
-            "cx": data.x,
-            "cy": data.y,
-            "r": 10,
-            "name": data.name,
-            "id": data.id,
-            "socket": socket
-        }));
+        um.createUser(vis, data.x, data.y, false, data.name, data.id);
     });
     socket.on('user-exit', function(name) {
-        userManager.remove(name);
+        um.removeUserByName(name);
     });
     socket.on('user-message', function(data) {
-        console.log(data);
-        userManager.say(data.userId, data.message);
+        console.log("message");
+        if(data.userId != um.getOwnUser().id) {
+            um.getUserById(data.userId).say(data.message, true);
+        }
     });
     socket.on('user-you', function(name) {
-        userManager.getByName(name).yours(true);
+        um.setOwnUser(name);
     });
     socket.on('update-all-users', function(users) {
-        userManager.updateAllUsers(users);
+        um.updateAllUsers(users);
     });
     socket.on('user-move', function(data) {
-        userManager.getById(data.userId).moveTo(data.x, data.y);
+        um.getUserById(data.userId).moveTo(data.x, data.y, true);
+    });
+
+
+
+
+
+
+    $(document || document.documentElement).on("keydown", function(e) {
+        if(e.which == 13) {
+            um.getOwnUser().say($("#form input").val());
+            $("#form input").val("");
+        }
+        $("#form input").focus();
     });
 });

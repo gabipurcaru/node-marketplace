@@ -12,44 +12,38 @@ body, html
     position: absolute;
     top: 0;
     left: 0;
-    width: 80%;
+    width: 100%;
     height: 100%;
     float: left;
     border: 0;
     margin: 0;
     padding: 0;
+    background-color: red;
 }
-#messages
-{
-    overflow: auto;
-    position: absolute;
-    float: right;
-    width: 20%;
+#chat {
+    position: fixed;
+    width: 300px;
+    height: 400px;
+    background-color: rgba(128, 255, 255, 0.5);
+    bottom: 0;
     right: 0;
-    max-height: 100%;
-    border: 0;
-    padding: 0;
-    margin: 0;
 }
-#messages-list
-{
-    overflow: auto;
-    list-style: none;
-    border: 0;
-    padding: 0;
-    margin: 0;
+#chat #form {
+    position: fixed;
+    bottom: 0;
 }
-#message-input
-{
-    margin: 0;
-    padding: 0;
+#chat #form input[type=text] {
+    width: 300px;
 }
-#message-send-button
-{
-    margin: 0;
-    padding: 0;
+svg text {
+    font-family: Arial;
 }
-#messages-list .you
-{
-    color: #2f2;
+svg .user .circle {
+    fill: #ddc;
+}
+svg .user.own .circle {
+    fill: #5a5;
+}
+svg .user .shout {
+    fill: rgba(0, 0, 0, 0.05);
 }
