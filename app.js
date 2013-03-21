@@ -4,7 +4,8 @@ var UserManager = require('./UserManager').UserManager;
 
 var app = module.exports = express.createServer();
 var io = require('socket.io').listen(app);
-app.listen(8000);
+var port = process.env.PORT || 8000;
+app.listen(port);
 
 // Configuration
 
