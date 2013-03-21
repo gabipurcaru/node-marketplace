@@ -1,10 +1,10 @@
 {
     "name": "node-marketplace"
   , "version": "0.0.1"
-  , "private": false
+  , "private": true
   , "dependencies": {
       "express": ">=2.3.11"
     , "jade": ">= 0.0.1"
-    , "socket.io": ">0.9"
+    , "socket.io": "0.9"
   }
 }
