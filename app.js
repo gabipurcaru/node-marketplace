@@ -43,4 +43,4 @@ io.sockets.on('connection', function(socket) {
     });
 });
 
-console.log("Express server listening on port %d", app.address().port);
+console.log("Express server listening on port %d", port);
