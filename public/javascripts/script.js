@@ -69,8 +69,12 @@ $(function() {
             .attr("dx", -10)
             .attr("dy", -10)
             .style("opacity", 0);
-        $("#messages").append($("<li>").html("<b>" + this.name + "</b>: " + text));
-        console.log("send? " + !supress);
+        if(this.isOwnUser()) {
+            $("#messages").append($("<li class='own'>").html("<b>" + this.name + "</b>: " + text));
+        } else {
+            $("#messages").append($("<li>").html("<b>" + this.name + "</b>: " + text));
+        }
+        $("#messages").scrollTop(10000000000);
         if(!supress) {
             socket.emit("user-message", $("#form input").val());
         }

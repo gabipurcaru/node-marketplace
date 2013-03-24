@@ -30,6 +30,7 @@ svg {
     background-color: rgba(128, 255, 255, 0.5);
     bottom: 0;
     right: 0;
+    border: 1px solid rgba(0, 0, 0, 0.2);
 }
 #chat #form {
     position: fixed;
@@ -37,6 +38,24 @@ svg {
 }
 #chat #form input[type=text] {
     width: 300px;
+    border: 1px solid rgba(0, 0, 0, 0.2);
+    margin-bottom: 0px;
+    border-collapse: collapse;
+    height: 20px;
+}
+#messages li {
+    list-style: none;
+    margin-left: 0px;
+    padding: 0px;
+}
+#messages li.own b {
+    color: #444;
+}
+#messages {
+    margin: 10px;
+    height: 350px;
+    overflow: auto;
+    padding: 0;
 }
 svg text {
     font-family: Arial;
