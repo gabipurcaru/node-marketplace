@@ -177,9 +177,10 @@ $(function() {
         .append("svg:g")
         .call(d3.behavior.zoom().on("zoom", zoom_pan))
         .on("click", function() {
-            var x = d3.event.x, y = d3.event.y;
+            var x = d3.event.layerX, y = d3.event.layerY;
             x = (x - zoom_pan.translate[0]) / zoom_pan.scale;
             y = (y - zoom_pan.translate[1]) / zoom_pan.scale;
+            console.debug(d3.event);
             um.moveOwnUser(x, y);
         });
 
@@ -192,7 +193,7 @@ $(function() {
     window.vis = vis;
 
     um = new UserManager();
-    var socket = io.connect();
+    var socket = io.connect(undefined, {'sync disconnect on unload' : true});
 
     $("#message-send-button").click(function() {
         if(!$("#message-input").val()) {
@@ -235,5 +236,9 @@ $(function() {
             $("#form input").val("");
         }
         $("#form input").focus();
+    });
+
+    $(window).unload(function() {
+        socket.disconnect();
     });
 });
